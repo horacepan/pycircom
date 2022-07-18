@@ -1,5 +1,5 @@
 pragma circom 2.0.4;
-include "ReLU.circom";
+include "relu.circom";
 include "fc.circom";
 
 template MLP(n, d, h1, h2, o) {

@@ -1,5 +1,5 @@
 pragma circom 2.0.3;
-include "../../circuits/mlp.circom";
+include "../../circuits/mlp3.circom";
 
 // n  = 1;
 // d  = 784;

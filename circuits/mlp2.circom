@@ -1,5 +1,5 @@
 pragma circom 2.0.4;
-include "ReLU.circom";
+include "relu.circom";
 include "fc.circom";
 
 template MLP(n, d, h1, o) {
@@ -61,7 +61,7 @@ template MLP(n, d, h1, o) {
     // Fill the output: n x o
     for (var i=0; i<n; i++) {
         for (var j=0; j<o; j++) {
-            out[i][j] <== fc3.out[i][j];
+            out[i][j] <== fc2.out[i][j];
             out[i][j] === exp_out[i][j];
         }
     }

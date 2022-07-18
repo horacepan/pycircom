@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PHASE1=../../ptau/pot13_final.ptau
+PHASE1=../../ptau/pot20_final.ptau
 BUILD_DIR=../../build/mlp2
 CIRCUIT_NAME=mlp2
 
