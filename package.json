@@ -1,0 +1,12 @@
+{
+  "name": "pycircom",
+  "version": "0.0.1",
+  "description": "python transpiler for circom",
+  "main": "index.js",
+  "author": "Horace <horacepan@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "circom_tester": "^0.0.14",
+    "circomlib": "^2.0.5"
+  }
+}
