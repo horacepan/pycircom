@@ -1,5 +1,5 @@
 pragma circom 2.0.4;
-include "ReLU.circom";
+include "relu.circom";
 include "fc.circom";
 
 template MLP(n, d, h1, h2, o) {
@@ -19,18 +19,8 @@ template MLP(n, d, h1, h2, o) {
     component fc1 = fc(n, d, h1);
     component fc2 = fc(n, h1, h2);
     component fc3 = fc(n, h2, o);
-    component relu1[n][h1];
-    for (var i=0; i<n; i++) {
-        for (var j=0; j<h1; j++) {
-            relu1[i][j] = ReLU();
-        }
-    }
-    component relu2[n][h2];
-    for (var i=0; i<n; i++) {
-        for (var j=0; j<h2; j++) {
-            relu2[i][j] = ReLU();
-        }
-    }
+    component relu1 = relu2d(n, h1);
+    component relu2 = relu2d(n, h2);
 
     // fill the inputs of fc1
     for (var i=0; i<n; i++) {
@@ -50,14 +40,14 @@ template MLP(n, d, h1, h2, o) {
     // Do the first relu
     for (var i=0; i<n; i++) {
         for (var j=0; j<h1; j++) {
-            relu1[i][j].in <== fc1.out[i][j];
+            relu1.in[i][j] <== fc1.out[i][j];
         }
     }
 
     // fill the inputs of fc2
     for (var i=0; i<n; i++) {
         for (var j=0; j<h1; j++) {
-            fc2.in[i][j] <== relu1[i][j].out;
+            fc2.in[i][j] <== relu1.out[i][j];
         }
     }
 
@@ -72,14 +62,14 @@ template MLP(n, d, h1, h2, o) {
     // Do the 2nd relu
     for (var i=0; i<n; i++) {
         for (var j=0; j<h2; j++) {
-            relu2[i][j].in <== fc2.out[i][j];
+            relu2.in[i][j] <== fc2.out[i][j];
         }
     }
 
     // fill the inputs of fc3: n x h1
     for (var i=0; i<n; i++) {
         for (var j=0; j<h2; j++) {
-            fc3.in[i][j] <== relu2[i][j].out;
+            fc3.in[i][j] <== relu2.out[i][j];
         }
     }
     // fill the params of fc3

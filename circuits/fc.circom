@@ -21,3 +21,28 @@ template fc (n, d1, d2) {
         }
     }
 }
+
+/*
+example circuit with fixed fully connected params
+*/
+template fc_fixed_params (n) {
+    var DIN = 2;
+    var DOUT = 3;
+    var weight[DIN][DOUT] = [[1, 0], [0, 1], [0, 0]];
+    var bias[DOUT] = [10, 100, 1000];
+
+    signal input in[n][DIN];
+    signal output out[n][DOUT];
+
+    signal _sums[n][DOUT][DIN+1];
+    for (var i = 0; i < n; i++) {
+        for (var k = 0; k < DOUT; k++) {
+            _sums[i][k][0] <== 0;
+            for (var j = 0; j < DIN; j++) {
+                _sums[i][k][j+1] <== _sums[i][k][j] + in[i][j] * weight[j][k];
+            }
+            // wanna be summing over index j (all the din for din x (din, dout) matmult)
+            out[i][k] <== _sums[i][k][DIN] + bias[k];
+        }
+    }
+}

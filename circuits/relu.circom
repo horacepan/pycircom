@@ -30,7 +30,7 @@ template IsPositive() {
 }
 
 
-template ReLU() {
+template relu() {
     signal input in;
     signal output out;
     component pos = IsPositive();
@@ -38,18 +38,17 @@ template ReLU() {
     out <== in * pos.out;
 }
 
-template ReLU2d(m, n) {
+template relu2d(m, n) {
     signal input in[m][n];
     signal output out[m][n];
     component pos[m][n];
 
-    
     for (var i = 0; i < m; i++) {
         for (var j = 0; j < n; j++) {
-            pos[m][n] = IsPositive();
-            pos[m][n].in <== in[m][n];
+            pos[i][j] = IsPositive();
+            pos[i][j].in <== in[i][j];
 
-            out[m][n] <== in[m][n] * pos[m][n].out;
+            out[i][j] <== in[i][j] * pos[i][j].out;
         }
     }
 }
