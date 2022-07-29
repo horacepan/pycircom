@@ -9,6 +9,7 @@ MODULE_PATH_DIR = {
     'fc': os.path.join(CIRCUITDIR, 'fc.circom'),
     'relu': os.path.join(CIRCUITDIR, 'relu.circom'),
     'relu2d': os.path.join(CIRCUITDIR, 'relu.circom'),
+    'square2d': os.path.join(CIRCUITDIR, 'square.circom'),
     'flatten': os.path.join(CIRCUITDIR, 'utils.circom')
 }
 COMPONENT_IDS = defaultdict(lambda: 1) # gives the next avail id for a circuit
@@ -90,9 +91,9 @@ def gen_layers(spec):
                  ""
             ])
             prev_out_dim = layer['weight'].shape[0]
-        elif layer['type'] == 'relu2d':
+        elif layer['type'] == 'relu2d' or layer['type'] == 'square2d':
             layer_name = assign_layer_name(layer, spec['name']) # the
-            circuit_name = 'relu2d'
+            circuit_name = layer['type']
             comp_name = f'_{layer_name}'
             # need the previous layer's output size
             lines.append(f"    component {comp_name} = {circuit_name}(n, {prev_out_dim});")
