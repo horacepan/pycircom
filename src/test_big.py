@@ -11,12 +11,12 @@ def set_params(net, weights):
 def main():
     st = time.time()
     np.random.seed(0)
-    in_dim = 784
+    in_dim = 3072
     out_dim = 10
     # tuples of (out_dim, in_dim)
     #fc_shapes = [(8, in_dim), (4, 8), (2, 4)]
-    fc_shapes = [(256, in_dim), (128, 256)]
-    out_shape = (10, 128)
+    fc_shapes = [(1024, 3072), (784, 1024), (512, 784)]
+    out_shape = (10, 512)
     layers = []
     params = []
     for shape in fc_shapes:
@@ -47,7 +47,7 @@ def main():
 
     spec = {
         'version': "2.0.3",
-        'name': 'mlp_big',
+        'name': 'dense_mlp',
         'in_dim': in_dim,
         'out_dim': out_dim,
         'circ_args': "n",
@@ -58,11 +58,13 @@ def main():
 
     X = torch.ones(1, in_dim)
     net = nn.Sequential(
+        nn.Linear(3072, 1024),
+        nn.ReLU(),
+        nn.Linear(1024, 784),
+        nn.ReLU(),
         nn.Linear(784, 256),
         nn.ReLU(),
-        nn.Linear(256, 128),
-        nn.ReLU(),
-        nn.Linear(128, 10)
+        nn.Linear(256, 10),
     )
     set_params(net, params)
     print("expected:", net(X))
