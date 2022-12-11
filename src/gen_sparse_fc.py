@@ -2,7 +2,7 @@ import scipy.sparse
 import numpy as np
 
 SP_FMT_LINES = [
-    "template {name} (n) {{",
+    "template {name} (batch_size) {{",
     "    var DIN = {DIN};",
     "    var DOUT = {DOUT};",
     "    // precondition: rows are sorted",
@@ -11,13 +11,13 @@ SP_FMT_LINES = [
     "    var rows[NNZ] = {rows};",
     "    var cols[NNZ] = {cols};",
     "    var vals[NNZ] = {vals};",
-    "    var rnnz[DOUT] = {rnnz}; // index i of rnnz = number of non zeros in row i of sparse W",
+    "    var rnnz[DOUT] = {rnnz}; // rnnz[i] = number of non zeros in row i of the sparse matrix W",
     "    var bias[DOUT] = {bias};",
-    "    signal input in[n][DIN];",
-    "    signal output out[n][DOUT]; //store intermediate sums",
-    "    signal _sums[n][DOUT][DIN+1];",
+    "    signal input in[batch_size][DIN];",
+    "    signal output out[batch_size][DOUT]; //store intermediate sums",
+    "    signal _sums[batch_size][DOUT][DIN+1];",
     "    var l = 0; // counter var",
-    "    for (var i = 0 ; i < n; i++) {{",
+    "    for (var i = 0 ; i < batch_size; i++) {{",
     "        for (var j = 0 ; j < DOUT; j++) {{",
     "            _sums[i][j][0] <== 0;",
     "            // k = 0...rnnz in row [j]",
@@ -28,6 +28,7 @@ SP_FMT_LINES = [
     "            }}",
     "            out[i][j] <== _sums[i][j][rnnz[j]] + bias[j];",
     "        }}",
+    "        l = 0;",
     "    }}",
     "}}",
 ]
@@ -37,32 +38,24 @@ SP_FMT_STR = "\n".join(SP_FMT_LINES)
 Fill: name, DIN, DOUT, NNZ, rows, cols, vals, rnnz, bias
 '''
 
-def main():
-    np.random.seed(2)
-    '''
-    matrix = [1 0 2]
-             [0 1 0]
-             [0 0 1]
-    '''
-    DIN = 123
-    DOUT = 100
-    x = scipy.sparse.random(DOUT, DIN, density=0.2, dtype=int)
-    x.data = np.random.randint(0, 100, size=x.data.shape)
-    NNZ = len(x.data)
-    bias = np.random.randint(0, 100, size=(DOUT,))
-    # need to compute this...
+def gen_sparse_fc(sparse_mat, bias, template_name='spmm'):
+    DOUT, DIN =  sparse_mat.shape
+    assert bias.shape == (DOUT,)
+    NNZ = len(sparse_mat.data)
+
+    # rnnz[i] = num nnz in row i of sparse_mat
     rnnz = [0 for i in range(DOUT)]
-    for r in x.row:
+    for r in sparse_mat.row:
         rnnz[r] += 1
     assert(sum(rnnz) == NNZ)
 
-    r = x.row.tolist()
-    c = x.col.tolist()
-    v = x.data.tolist()
+    r = sparse_mat.row.tolist()
+    c = sparse_mat.col.tolist()
+    v = sparse_mat.data.tolist()
     rows, cols, vals = zip(*sorted(zip(r, c, v)))
     rows, cols, vals = list(rows), list(cols), list(vals)
     fmt_dict = {
-        'name': 'spmm',
+        'name': template_name,
         'DIN': DIN,
         'DOUT': DOUT,
         'NNZ': NNZ,
@@ -72,14 +65,31 @@ def main():
         'rnnz': rnnz,
     	'bias':  bias.tolist()
     }
-    assert(len(fmt_dict['vals']) == NNZ)
-    input = np.random.randint(0, 10, size=(DIN,1))
-    X = x.toarray()
-    result = X@input + bias.reshape(-1, 1)
-    print(SP_FMT_STR.format(**fmt_dict))
-    print('input:', input.ravel().tolist())
-    print('result:', result.ravel().tolist())
 
+    assert(len(rows) == NNZ)
+    assert(len(cols) == NNZ)
+    assert(len(vals) == NNZ)
+    return SP_FMT_STR.format(**fmt_dict)
+
+def test_gen_sparse():
+    np.random.seed(0)
+    batch_size = 2
+    DIN = 5
+    DOUT = 4
+    template_name = 'spmm'
+    sparse_mat = scipy.sparse.random(DOUT, DIN, density=0.2, dtype=int)
+    sparse_mat.data = np.random.randint(0, 100, size=sparse_mat.data.shape)
+    bias = np.random.randint(0, 100, size=(DOUT,))
+    input = np.random.randint(0, 10, size=(DIN, batch_size))
+    output = sparse_mat.todense()@input + bias.reshape(-1, 1)
+
+    circuit_str = gen_sparse_fc(sparse_mat, bias, template_name)
+    print(circuit_str)
+    print('component main { public [ in ] } = ' + f'{template_name}({batch_size});')
+    print('/* INPUT = {')
+    print('    "in": {}'.format(np.array2string(input.T, separator=',')))
+    print('} */')
+    print('/*Expected output:\n{}\n*/'.format(np.array2string(output, separator=',')))
 
 if __name__ == '__main__':
-    main()
+    test_gen_sparse()
